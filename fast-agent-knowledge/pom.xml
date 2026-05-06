@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.fast.agent</groupId>
+        <artifactId>fastAgent</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>fast-agent-knowledge</artifactId>
+    <name>fast-agent-knowledge</name>
+    <description>Knowledge module - RAG, document loading, vector database, retrieval</description>
+
+    <dependencies>
+        <!-- Core Module -->
+        <dependency>
+            <groupId>com.fast.agent</groupId>
+            <artifactId>fast-agent-core</artifactId>
+        </dependency>
+
+        <!-- Common Module -->
+        <dependency>
+            <groupId>com.fast.agent</groupId>
+            <artifactId>fast-agent-common</artifactId>
+        </dependency>
+
+        <!-- Model Module -->
+        <dependency>
+            <groupId>com.fast.agent</groupId>
+            <artifactId>fast-agent-model</artifactId>
+        </dependency>
+
+        <!-- LangChain4j Document Loaders -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-document-parser-apache-pdfbox</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-document-parser-apache-poi</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
+
+        <!-- Spring Boot Starter -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>
