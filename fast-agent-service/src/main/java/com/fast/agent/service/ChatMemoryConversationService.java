@@ -1,7 +1,6 @@
 package com.fast.agent.service;
 
 import com.fast.agent.core.chat.ChatAssistant;
-import com.fast.agent.core.chat.ChatMemoryService;
 
 /**
  * 基于 ChatMemory 的对话服务接口

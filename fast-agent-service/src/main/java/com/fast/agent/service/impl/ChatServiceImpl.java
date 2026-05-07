@@ -1,9 +1,9 @@
 package com.fast.agent.service.impl;
 
 import com.fast.agent.common.enums.ChatRole;
-import com.fast.agent.common.utils.AIMessageUtils;
 import com.fast.agent.core.intent.IntentParser;
 import com.fast.agent.core.skills.SkillsPromptLoader;
+import com.fast.agent.memory.shortterm.CustomRedisChatMemoryStore;
 import com.fast.agent.model.dto.ChatRequest;
 import com.fast.agent.model.entity.Message;
 import com.fast.agent.model.entity.Session;
@@ -22,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-import dev.langchain4j.data.message.SystemMessage;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,11 +41,8 @@ public class ChatServiceImpl implements ChatService {
     private final SkillsPromptLoader skillPromptLoader;
     private final StreamingChatLanguageModel streamingChatModel;
     private final MessageService messageService;
+    private final CustomRedisChatMemoryStore customRedisChatMemoryStore;
 
-    private final Map<String, ChatMemory> chatMemoryMap = new ConcurrentHashMap<>();
-
-    // 最大 token 数（根据模型自己调整）
-    private static final int MAX_TOKEN = 4096;
 
     @Override
     public void streamChat(ChatRequest request, SseEmitter sseEmitter) {
@@ -68,14 +64,16 @@ public class ChatServiceImpl implements ChatService {
                 IntentType intentType = intentParser.parseIntent(request.getMessage());
                 // 根据意图获取prompt
                 String skillPrompt = skillPromptLoader.getSkillPrompt(intentType);
-                // todo 本来想用 tokneWindowChatMemory 但是找不到能用的分词器，后续要处理
-                ChatMemory chatMemory = chatMemoryMap.computeIfAbsent(sessionId,
-                        k -> MessageWindowChatMemory.withMaxMessages(6)
-                );
+                // todo 本来想用 tokenWindowChatMemory 但是找不到能用的分词器，后续要处理
+                ChatMemory chatMemory = MessageWindowChatMemory.builder()
+                        .id(sessionId)                // 用 sessionId 作为记忆ID
+                        .maxMessages(6)               // 最多保留最近6条消息
+                        .chatMemoryStore(customRedisChatMemoryStore)  // 使用自己的Redis存储
+                        .build();
 
                 // 构建流式 AI 服务
                 StreamingChatAssistant aiService = AiServices.builder(StreamingChatAssistant.class)
-                        .chatMemory(chatMemory)
+                        .chatMemory(chatMemory.messages().isEmpty() ? null : chatMemory)
                         .streamingChatLanguageModel(streamingChatModel)
                         .build();
 
