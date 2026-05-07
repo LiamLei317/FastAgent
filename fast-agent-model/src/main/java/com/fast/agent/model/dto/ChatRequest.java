@@ -12,6 +12,7 @@ public class ChatRequest {
     /**
      * 会话ID
      */
+    @NotBlank(message = "会话ID不能为空")
     private String sessionId;
 
     /**
@@ -19,11 +20,6 @@ public class ChatRequest {
      */
     @NotBlank(message = "用户消息不能为空")
     private String message;
-
-    /**
-     * 用户ID
-     */
-    private String userId;
 
     /**
      * 是否流式输出

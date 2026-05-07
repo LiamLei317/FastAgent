@@ -9,10 +9,11 @@ import org.springframework.stereotype.Component;
 /**
  * ReAct 智能体实现
  */
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ReactAgent extends BaseAgent {
+    
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ReactAgent.class);
 
     private final LlmService llmService;
 

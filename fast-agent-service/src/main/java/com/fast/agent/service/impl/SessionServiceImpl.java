@@ -1,5 +1,6 @@
 package com.fast.agent.service.impl;
 
+import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -31,13 +32,15 @@ public class SessionServiceImpl extends ServiceImpl<SessionMapper, Session> impl
         if (session.getUpdateTime() == null) {
             session.setUpdateTime(LocalDateTime.now());
         }
+        String id = "se_" + IdUtil.getSnowflakeNextIdStr();
+        session.setId(id);
         sessionMapper.insert(session);
         log.info("创建会话成功，ID: {}", session.getId());
         return session;
     }
 
     @Override
-    public Session getSessionById(Long id) {
+    public Session getSessionById(String id) {
         Session session = sessionMapper.selectById(id);
         if (session == null) {
             log.warn("未找到会话，ID: {}", id);

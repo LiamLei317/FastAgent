@@ -30,7 +30,7 @@ public class SseChatController {
         new Thread(() -> {
             try {
                 // 校验 sessionId 是否存在
-                Session session = sessionService.getSessionById(Long.parseLong(sessionId));
+                Session session = sessionService.getSessionById(sessionId);
                 if (session == null) {
                     emitter.send(SseEmitter.event().data("会话不存在，sessionId: " + sessionId));
                     emitter.complete();

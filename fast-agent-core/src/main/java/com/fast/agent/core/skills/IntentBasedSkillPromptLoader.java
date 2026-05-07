@@ -13,9 +13,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
-@Slf4j
 @Component
 public class IntentBasedSkillPromptLoader {
+    
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(IntentBasedSkillPromptLoader.class);
 
     // 项目根目录 /prompts/skills
     private static final Path SKILL_DIR =
@@ -82,13 +83,6 @@ public class IntentBasedSkillPromptLoader {
 
     // 对外提供：根据意图获取技能
     public String getSkillPrompt(IntentType intentType) {
-        String code = switch (intentType) {
-            case CREATIVE_CLARIFICATION -> "creative-clarification";
-            case MARKET_ANALYSIS -> "market-analysis";
-            case PRODUCT_DEFINITION -> "product-definition";
-            case CREATIVE_DESIGN -> "creative-design";
-            default -> "default";
-        };
-        return skillCache.getOrDefault(code, skillCache.get("default"));
+        return skillCache.getOrDefault(intentType.getCode(), skillCache.get("default"));
     }
 }

@@ -7,9 +7,10 @@ import org.springframework.stereotype.Component;
  * 阶段完成检测器
  * 用于检测大模型返回内容中是否包含阶段完成标记
  */
-@Slf4j
 @Component
 public class StepCompletionDetector {
+    
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(StepCompletionDetector.class);
 
     /**
      * 阶段完成标记

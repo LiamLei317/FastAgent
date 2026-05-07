@@ -12,10 +12,11 @@ import java.time.Duration;
  * 会话步骤Redis服务
  * 负责存储和获取当前会话所处的流程阶段状态
  */
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SessionStepRedisService {
+    
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SessionStepRedisService.class);
 
     private final StringRedisTemplate redisTemplate;
     
@@ -151,25 +152,64 @@ public class SessionStepRedisService {
         SessionStep currentStep = getSessionStep(sessionId);
         SessionStep nextStep = currentStep.getNextStep();
         
-        return SessionStepInfo.builder()
-                .sessionId(sessionId)
-                .currentStep(currentStep)
-                .nextStep(nextStep)
-                .isFinished(currentStep.isFinished())
-                .canProceed(currentStep.canProceed())
-                .build();
+        SessionStepInfo info = new SessionStepInfo();
+        info.setSessionId(sessionId);
+        info.setCurrentStep(currentStep);
+        info.setNextStep(nextStep);
+        info.setIsFinished(currentStep.isFinished());
+        info.setCanProceed(currentStep.canProceed());
+        return info;
     }
 
     /**
      * 会话步骤状态信息
      */
-    @lombok.Data
-    @lombok.Builder
     public static class SessionStepInfo {
         private String sessionId;
         private SessionStep currentStep;
         private SessionStep nextStep;
         private Boolean isFinished;
         private Boolean canProceed;
+        
+        // Getter 和 Setter 方法
+        public String getSessionId() {
+            return sessionId;
+        }
+        
+        public void setSessionId(String sessionId) {
+            this.sessionId = sessionId;
+        }
+        
+        public SessionStep getCurrentStep() {
+            return currentStep;
+        }
+        
+        public void setCurrentStep(SessionStep currentStep) {
+            this.currentStep = currentStep;
+        }
+        
+        public SessionStep getNextStep() {
+            return nextStep;
+        }
+        
+        public void setNextStep(SessionStep nextStep) {
+            this.nextStep = nextStep;
+        }
+        
+        public Boolean getIsFinished() {
+            return isFinished;
+        }
+        
+        public void setIsFinished(Boolean isFinished) {
+            this.isFinished = isFinished;
+        }
+        
+        public Boolean getCanProceed() {
+            return canProceed;
+        }
+        
+        public void setCanProceed(Boolean canProceed) {
+            this.canProceed = canProceed;
+        }
     }
 }

@@ -1,12 +1,13 @@
 package com.fast.agent.web.controller;
 
+import com.fast.agent.core.chat.ChatAssistant;
 import com.fast.agent.common.result.R;
 import com.fast.agent.model.dto.ChatRequest;
 import com.fast.agent.model.dto.ChatResponse;
 import com.fast.agent.model.entity.Message;
 import com.fast.agent.model.entity.Session;
 import com.fast.agent.model.vo.SessionVO;
-import com.fast.agent.service.ConversationContextService;
+import com.fast.agent.service.ChatMemoryConversationService;
 import com.fast.agent.service.MessageService;
 import com.fast.agent.service.SessionService;
 import jakarta.validation.Valid;
@@ -28,7 +29,7 @@ public class ChatController {
 
     private final SessionService sessionService;
     private final MessageService messageService;
-    private final ConversationContextService contextService;
+    private final ChatMemoryConversationService chatMemoryConversationService;
 
     /**
      * 创建会话
@@ -86,7 +87,7 @@ public class ChatController {
                 return R.fail("sessionId 不能为空");
             }
             
-            Session session = sessionService.getSessionById(Long.parseLong(sessionId));
+            Session session = sessionService.getSessionById(sessionId);
             if (session == null) {
                 return R.fail("会话不存在，sessionId: " + sessionId);
             }
@@ -96,7 +97,7 @@ public class ChatController {
             // 保存用户消息到数据库
             try {
                 Message userMessage = new Message();
-                userMessage.setSessionId(Long.parseLong(sessionId));
+                userMessage.setSessionId(sessionId);
                 userMessage.setRole("user");
                 userMessage.setContent(request.getMessage());
                 userMessage.setCreateTime(java.time.LocalDateTime.now());
@@ -108,33 +109,23 @@ public class ChatController {
                 // 即使保存失败也继续处理对话
             }
             
-            // 保存用户消息到 Redis 上下文
-            contextService.saveMessage(sessionId, "user", request.getMessage());
+            // 使用 ChatMemory 进行对话，自动携带上下文
+            ChatAssistant chatAssistant = chatMemoryConversationService.getChatAssistant(sessionId);
             
-            // 获取最近5轮对话上下文
-            String context = contextService.formatContext(sessionId, 5);
+            // 模拟AI回复内容（使用 ChatMemory 自动管理上下文）
+            String aiResponse = "聊天功能待实现 - 使用 ChatMemory";
             
-            // 模拟AI回复内容（基于上下文）
-            String aiResponse = "聊天功能待实现";
-            if (!context.isEmpty()) {
-                aiResponse = "基于对话上下文的回复：" + aiResponse + "（已包含" + sessionId + "的上下文）";
-            }
-            
-            // 打印完整消息内容
-            String fullMessage = context.isEmpty() ? request.getMessage() : context + "\n\n" + request.getMessage();
-            log.info("=== 普通对话 - 发送给大模型的完整消息 ===");
+            log.info("=== 普通对话 - 使用 ChatMemory ===");
             log.info("sessionId: {}", sessionId);
             log.info("原始消息: {}", request.getMessage());
-            log.info("上下文长度: {} 字符", context.length());
-            log.info("完整消息长度: {} 字符", fullMessage.length());
-            log.info("完整消息内容: {}", fullMessage);
+            log.info("使用 ChatMemory 自动管理上下文");
             log.info("============================================");
             
-            // 保存AI回复到数据库和 Redis 上下文
+            // 保存AI回复到数据库
             try {
                 // 保存到数据库
                 Message aiMessage = new Message();
-                aiMessage.setSessionId(Long.parseLong(sessionId));
+                aiMessage.setSessionId(sessionId);
                 aiMessage.setRole("assistant");
                 aiMessage.setContent(aiResponse);
                 aiMessage.setCreateTime(java.time.LocalDateTime.now());
@@ -142,9 +133,8 @@ public class ChatController {
                 Message savedAiMessage = messageService.createMessage(aiMessage);
                 log.info("AI回复已保存到数据库，messageId: {}", savedAiMessage.getId());
                 
-                // 保存到 Redis 上下文
-                contextService.saveMessage(sessionId, "assistant", aiResponse);
-                log.info("AI回复已保存到Redis上下文，sessionId: {}", sessionId);
+                // ChatMemory 自动保存，无需手动操作
+                log.info("AI回复已自动保存到 ChatMemory，sessionId: {}", sessionId);
             } catch (Exception e) {
                 log.error("保存AI回复失败", e);
             }
@@ -171,7 +161,7 @@ public class ChatController {
     public R<Void> deleteSession(@PathVariable String sessionId) {
         try {
             // 校验 sessionId 是否存在
-            Session session = sessionService.getSessionById(Long.parseLong(sessionId));
+            Session session = sessionService.getSessionById(sessionId);
             if (session == null) {
                 return R.fail("会话不存在，sessionId: " + sessionId);
             }

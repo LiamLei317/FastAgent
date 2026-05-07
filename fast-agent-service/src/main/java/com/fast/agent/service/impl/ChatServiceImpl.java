@@ -1,16 +1,32 @@
 package com.fast.agent.service.impl;
 
-import com.fast.agent.core.llm.LlmConfig;
+import com.fast.agent.common.enums.ChatRole;
+import com.fast.agent.common.utils.AIMessageUtils;
+import com.fast.agent.core.intent.IntentParser;
+import com.fast.agent.core.skills.SkillsPromptLoader;
 import com.fast.agent.model.dto.ChatRequest;
+import com.fast.agent.model.entity.Message;
+import com.fast.agent.model.entity.Session;
+import com.fast.agent.model.enums.IntentType;
 import com.fast.agent.service.ChatService;
-import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
+import com.fast.agent.service.MessageService;
+import com.fast.agent.service.SessionService;
+import dev.langchain4j.memory.ChatMemory;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
+import dev.langchain4j.model.chat.StreamingChatLanguageModel;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.TokenStream;
+import dev.langchain4j.service.UserMessage;
+import dev.langchain4j.service.V;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import dev.langchain4j.data.message.SystemMessage;
 
-import java.util.function.Consumer;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * 流式对话服务实现
@@ -20,66 +36,113 @@ import java.util.function.Consumer;
 @RequiredArgsConstructor
 public class ChatServiceImpl implements ChatService {
 
-    private final LlmConfig llmConfig;
+    private final ThreadPoolExecutor asyncExecutor;
+    private final SessionService sessionService;
+    private final IntentParser intentParser;
+    private final SkillsPromptLoader skillPromptLoader;
+    private final StreamingChatLanguageModel streamingChatModel;
+    private final MessageService messageService;
+
+    private final Map<String, ChatMemory> chatMemoryMap = new ConcurrentHashMap<>();
+
+    // 最大 token 数（根据模型自己调整）
+    private static final int MAX_TOKEN = 4096;
 
     @Override
-    public void streamChat(ChatRequest request, Consumer<String> chunkConsumer) {
-        try {
-            OpenAiStreamingChatModel.OpenAiStreamingChatModelBuilder builder = OpenAiStreamingChatModel.builder()
-                    .apiKey(llmConfig.getApiKey())
-                    .modelName(llmConfig.getModelName())
-                    .temperature(llmConfig.getTemperature())
-                    .maxTokens(llmConfig.getMaxTokens())
-                    .timeout(java.time.Duration.ofSeconds(60));
-            if (llmConfig.getBaseUrl() != null && !llmConfig.getBaseUrl().isEmpty()) {
-                builder.baseUrl(llmConfig.getBaseUrl());
-            }
-            OpenAiStreamingChatModel model = builder.build();
+    public void streamChat(ChatRequest request, SseEmitter sseEmitter) {
 
-            StreamingChatAssistant assistant = AiServices.builder(StreamingChatAssistant.class)
-                    .streamingChatLanguageModel(model)
-                    .build();
+        asyncExecutor.execute(() -> {
+            String sessionId = request.getSessionId();
 
-            // 使用 CountDownLatch 确保流式处理完成
-            java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
-            
-            // 打印发送给大模型的消息内容
-            String messageToSend = request.getMessage();
-            log.info("=== 发送给大模型的消息 ===");
-            log.info("消息长度: {} 字符", messageToSend.length());
-            log.info("消息内容: {}", messageToSend);
-            log.info("==========================");
-            
-            TokenStream tokenStream = assistant.chat(messageToSend);
-            tokenStream.onNext(chunk -> {
-                log.info("接收到流式数据: {}", chunk);
-                chunkConsumer.accept(chunk);
-            })
-                    .onComplete(response -> {
-                        log.info("流式对话完成，最终响应: {}", response);
-                        latch.countDown();
-                    })
-                    .onError(error -> {
-                        log.error("流式对话异常", error);
-                        latch.countDown();
-                    })
-                    .start();
-
-            // 等待流式处理完成，确保不会提前返回
             try {
-                latch.await(120, java.util.concurrent.TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                log.error("等待流式处理完成时被中断", e);
-                Thread.currentThread().interrupt();
-            }
+                // 会话校验
+                Session session = sessionService.getSessionById(sessionId);
+                if (session == null) {
+                    sseEmitter.send(SseEmitter.event()
+                            .data("会话不存在，sessionId: " + sessionId));
+                    sseEmitter.complete(); // 关闭连接
+                    return;
+                }
+                log.info("============================ 开始对话");
+                // 意图识别
+                IntentType intentType = intentParser.parseIntent(request.getMessage());
+                // 根据意图获取prompt
+                String skillPrompt = skillPromptLoader.getSkillPrompt(intentType);
+                // todo 本来想用 tokneWindowChatMemory 但是找不到能用的分词器，后续要处理
+                ChatMemory chatMemory = chatMemoryMap.computeIfAbsent(sessionId,
+                        k -> MessageWindowChatMemory.withMaxMessages(6)
+                );
 
-        } catch (Exception e) {
-            log.error("流式对话失败", e);
-            throw new RuntimeException("流式对话失败", e);
-        }
+                // 构建流式 AI 服务
+                StreamingChatAssistant aiService = AiServices.builder(StreamingChatAssistant.class)
+                        .chatMemory(chatMemory)
+                        .streamingChatLanguageModel(streamingChatModel)
+                        .build();
+
+                // 保存用户消息
+                saveMessage(sessionId, request.getMessage(), ChatRole.USER.name());
+
+                // 流式调用
+                StringBuilder fullAiResponse = new StringBuilder();
+
+                TokenStream tokenStream = aiService.stream(
+                        skillPrompt,
+                        request.getMessage()
+                );
+
+                // 开始对话
+                tokenStream.onNext(token -> {
+                            try {
+                                sseEmitter.send(SseEmitter.event().data(token));
+                                fullAiResponse.append(token);
+                            } catch (Exception e) {
+                                log.error("SSE 推送失败", e);
+                            }
+                        })
+                        .onComplete(response -> {
+                            saveMessage(sessionId, fullAiResponse.toString(), ChatRole.ASSISTANT.name());
+                            sseEmitter.complete();
+                            log.info("流式对话完成");
+                        })
+                        .onError(e -> {
+                            log.error("流式对话异常", e);
+                            try {
+                                sseEmitter.send(SseEmitter.event().data("对话异常：" + e.getMessage()));
+                            } catch (Exception ex) {
+                                throw new RuntimeException(ex);
+                            }
+                            sseEmitter.completeWithError(e);
+                        })
+                        .start();
+
+
+            } catch (Exception e) {
+                log.error("对话异常", e);
+                try {
+                    sseEmitter.send(SseEmitter.event().data("系统异常：" + e.getMessage()));
+                } catch (Exception ex) {
+                    log.error("发送错误失败", ex);
+                } finally {
+                    sseEmitter.complete();
+                }
+            }
+        });
     }
 
-    interface StreamingChatAssistant {
-        TokenStream chat(String message);
+    private interface StreamingChatAssistant {
+        TokenStream stream(@V("systemMessage") String  systemMessage,
+                           @UserMessage String userMessage);
+    }
+
+    private void saveMessage(String sessionId, String content, String role) {
+        try {
+            Message msg = new Message();
+            msg.setSessionId(sessionId);
+            msg.setRole(role);
+            msg.setContent(content);
+            messageService.createMessage(msg);
+        } catch (Exception e) {
+            log.error("保存用户消息失败", e);
+        }
     }
 }

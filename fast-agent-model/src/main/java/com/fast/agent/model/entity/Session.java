@@ -7,18 +7,15 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
-/**
- * 会话实体
- */
 @Data
 @TableName("chat_session")
 public class Session {
 
     /**
-     * 主键ID
+     * 主键ID（UUID 字符串）
      */
-    @TableId(type = IdType.AUTO)
-    private Long id;
+    @TableId(type = IdType.ASSIGN_UUID)
+    private String id;
 
     /**
      * 用户ID
@@ -26,9 +23,19 @@ public class Session {
     private String userId;
 
     /**
-     * 会话标题（第一句提问生成）
+     * 会话标题（长度1024）
      */
     private String title;
+
+    /**
+     * 状态 1-正常 0-禁用
+     */
+    private Integer status;
+
+    /**
+     * 逻辑删除 0-未删除 1-已删除
+     */
+    private Integer isDeleted;
 
     /**
      * 创建时间

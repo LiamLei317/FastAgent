@@ -22,7 +22,7 @@ public interface SessionService {
      * @param id 会话ID
      * @return 会话信息
      */
-    Session getSessionById(Long id);
+    Session getSessionById(String id);
 
     /**
      * 根据用户ID获取会话列表

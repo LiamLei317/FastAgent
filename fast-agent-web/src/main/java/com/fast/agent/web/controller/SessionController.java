@@ -41,7 +41,7 @@ public class SessionController {
     @GetMapping("/{id}")
     @Operation(summary = "获取会话详情", description = "根据ID获取会话详细信息")
     public ResponseEntity<Session> getSession(
-            @Parameter(description = "会话ID") @PathVariable Long id) {
+            @Parameter(description = "会话ID") @PathVariable String id) {
         try {
             Session session = sessionService.getSessionById(id);
             if (session != null) {

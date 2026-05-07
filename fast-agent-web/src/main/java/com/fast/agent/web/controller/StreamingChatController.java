@@ -1,5 +1,6 @@
 package com.fast.agent.web.controller;
 
+import com.fast.agent.core.chat.ChatAssistant;
 import com.fast.agent.core.flow.StepCompletionDetector;
 import com.fast.agent.core.intent.IntentParser;
 import com.fast.agent.core.session.SessionStepRedisService;
@@ -8,8 +9,7 @@ import com.fast.agent.model.dto.ChatRequest;
 import com.fast.agent.model.entity.Message;
 import com.fast.agent.model.entity.Session;
 import com.fast.agent.model.enums.IntentType;
-import com.fast.agent.service.ChatService;
-import com.fast.agent.service.ConversationContextService;
+import com.fast.agent.service.ChatMemoryConversationService;
 import com.fast.agent.service.MessageService;
 import com.fast.agent.service.SessionService;
 import jakarta.validation.Valid;
@@ -36,34 +36,28 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RequiredArgsConstructor
 public class StreamingChatController {
 
-    private final ChatService chatService;
     private final SessionService sessionService;
     private final MessageService messageService;
-    private final ConversationContextService contextService;
+    private final ChatMemoryConversationService chatMemoryConversationService;
     private final IntentParser intentParser;
     private final SkillsPromptLoader skillsPromptLoader;
     private final SessionStepRedisService sessionStepRedisService;
     private final StepCompletionDetector stepCompletionDetector;
 
     /**
-     * 构建完整消息：SystemMessage(技能Prompt) → Redis历史对话 → UserMessage(当前问题)
+     * 构建完整消息：SystemMessage(技能Prompt) → UserMessage(当前问题)
+     * ChatMemory 会自动携带历史对话上下文
      * @param skillPrompt 技能Prompt
-     * @param context 历史对话上下文
      * @param userQuestion 用户当前问题
      * @return 完整消息
      */
-    private String buildFullMessage(String skillPrompt, String context, String userQuestion) {
+    private String buildFullMessage(String skillPrompt, String userQuestion) {
         StringBuilder fullMessage = new StringBuilder();
         
         // 1. SystemMessage(技能Prompt)
         fullMessage.append("系统指令：").append(skillPrompt).append("\n\n");
         
-        // 2. Redis历史对话（如果有）
-        if (context != null && !context.trim().isEmpty()) {
-            fullMessage.append("历史对话：").append(context).append("\n\n");
-        }
-        
-        // 3. UserMessage(当前问题)
+        // 2. UserMessage(当前问题)
         fullMessage.append("用户问题：").append(userQuestion);
         
         return fullMessage.toString();
@@ -90,7 +84,7 @@ public class StreamingChatController {
                     return;
                 }
                 
-                Session session = sessionService.getSessionById(Long.parseLong(sessionId));
+                Session session = sessionService.getSessionById(sessionId);
                 if (session == null) {
                     emitter.send(SseEmitter.event().data("会话不存在，sessionId: " + sessionId));
                     emitter.complete();
@@ -112,7 +106,7 @@ public class StreamingChatController {
                 // 保存用户消息到数据库
                 try {
                     Message userMessage = new Message();
-                    userMessage.setSessionId(Long.parseLong(sessionId));
+                    userMessage.setSessionId(sessionId);
                     userMessage.setRole("user");
                     userMessage.setContent(request.getMessage());
                     userMessage.setCreateTime(java.time.LocalDateTime.now());
@@ -124,67 +118,61 @@ public class StreamingChatController {
                     // 即使保存失败也继续处理对话
                 }
                 
-                // 保存用户消息到 Redis 上下文
-                contextService.saveMessage(sessionId, "user", request.getMessage());
+                // 使用 ChatMemory 进行对话，自动携带上下文
+                ChatAssistant chatAssistant = chatMemoryConversationService.getChatAssistant(sessionId);
                 
-                // 步骤3：获取最近5轮对话上下文
-                String context = contextService.formatContext(sessionId, 5);
+                // 步骤3：使用 ChatMemory 进行对话，自动携带上下文
+                String fullMessage = buildFullMessage(skillPrompt, request.getMessage());
                 
-                // 步骤4：拼接顺序固定：SystemMessage(技能Prompt) → Redis历史对话 → UserMessage(当前问题)
-                String fullMessage = buildFullMessage(skillPrompt, context, request.getMessage());
-                
-                // 创建包含完整上下文的请求
-                ChatRequest contextRequest = new ChatRequest();
-                contextRequest.setSessionId(sessionId);
-                contextRequest.setMessage(fullMessage);
-                
-                // 打印完整消息内容
-                log.info("=== 流式对话 - 发送给大模型的完整消息 ===");
+                log.info("=== 流式对话 - 使用 ChatMemory ===");
                 log.info("sessionId: {}", sessionId);
                 log.info("原始消息: {}", request.getMessage());
-                log.info("上下文长度: {} 字符", context.length());
-                log.info("完整消息长度: {} 字符", fullMessage.length());
-                log.info("完整消息内容: {}", fullMessage);
+                log.info("使用 ChatMemory 自动管理上下文");
                 log.info("============================================");
                 
                 // 发送连接成功标识
                 emitter.send(SseEmitter.event().data("连接成功"));
-                log.info("发送连接成功消息，上下文长度: {}", context.length());
+                log.info("发送连接成功消息，使用 ChatMemory");
 
                 // 用于收集完整的AI回复内容
                 StringBuilder fullResponse = new StringBuilder();
 
-                // 流式回调：逐块推送模型输出
-                chatService.streamChat(contextRequest, chunk -> {
+                // 使用 ChatAssistant 进行流式对话，自动携带上下文
+                String aiResponse = chatAssistant.streamChatWithSystem(skillPrompt, request.getMessage());
+                
+                // 模拟流式推送
+                for (int i = 0; i < aiResponse.length(); i += 10) {
                     if (!completed.get()) {
                         try {
+                            int end = Math.min(i + 10, aiResponse.length());
+                            String chunk = aiResponse.substring(i, end);
                             emitter.send(SseEmitter.event().data(chunk));
                             fullResponse.append(chunk);
-                            log.debug("SSE 推送分片: {}", chunk);
+                            Thread.sleep(50); // 模拟流式延迟
                         } catch (Exception e) {
                             log.error("SSE 推送分片失败", e);
+                            break;
                         }
                     }
-                });
+                }
 
-                // 保存AI回复到数据库和 Redis 上下文
+                // 保存AI回复到数据库
                 try {
                     if (fullResponse.length() > 0) {
-                        String aiResponse = fullResponse.toString();
+                        String finalAiResponse = fullResponse.toString();
                         
                         // 保存到数据库
                         Message aiMessage = new Message();
-                        aiMessage.setSessionId(Long.parseLong(sessionId));
+                        aiMessage.setSessionId(sessionId);
                         aiMessage.setRole("assistant");
-                        aiMessage.setContent(aiResponse);
+                        aiMessage.setContent(finalAiResponse);
                         aiMessage.setCreateTime(java.time.LocalDateTime.now());
                         
                         Message savedAiMessage = messageService.createMessage(aiMessage);
                         log.info("AI回复已保存到数据库，messageId: {}", savedAiMessage.getId());
                         
-                        // 保存到 Redis 上下文
-                        contextService.saveMessage(sessionId, "assistant", aiResponse);
-                        log.info("AI回复已保存到Redis上下文，sessionId: {}", sessionId);
+                        // ChatMemory 自动保存，无需手动操作
+                        log.info("AI回复已自动保存到 ChatMemory，sessionId: {}", sessionId);
                     }
                 } catch (Exception e) {
                     log.error("保存AI回复失败", e);
