@@ -43,7 +43,7 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
     }
 
     @Override
-    public List<Message> getMessagesBySessionId(Long sessionId) {
+    public List<Message> getMessagesBySessionId(String sessionId) {
         QueryWrapper<Message> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("session_id", sessionId)
                    .orderByAsc("create_time");

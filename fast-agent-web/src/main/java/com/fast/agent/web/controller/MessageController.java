@@ -58,7 +58,7 @@ public class MessageController {
     @GetMapping("/session/{sessionId}")
     @Operation(summary = "获取会话消息列表", description = "获取指定会话的所有消息")
     public ResponseEntity<List<Message>> getMessagesBySessionId(
-            @Parameter(description = "会话ID") @PathVariable Long sessionId) {
+            @Parameter(description = "会话ID") @PathVariable String sessionId) {
         try {
             List<Message> messages = messageService.getMessagesBySessionId(sessionId);
             return ResponseEntity.ok(messages);

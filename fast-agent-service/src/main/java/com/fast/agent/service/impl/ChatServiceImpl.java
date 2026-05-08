@@ -22,9 +22,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -72,22 +69,20 @@ public class ChatServiceImpl implements ChatService {
                         .build();
 
                 // 构建流式 AI 服务
-                StreamingChatAssistant aiService = AiServices.builder(StreamingChatAssistant.class)
-                        .chatMemory(chatMemory.messages().isEmpty() ? null : chatMemory)
-                        .streamingChatLanguageModel(streamingChatModel)
-                        .build();
-
-                // 保存用户消息
-                saveMessage(sessionId, request.getMessage(), ChatRole.USER.name());
-
-                // 流式调用
-                StringBuilder fullAiResponse = new StringBuilder();
-
+                AiServices<StreamingChatAssistant> builder = AiServices.builder(StreamingChatAssistant.class)
+                        .streamingChatLanguageModel(streamingChatModel);
+                // langchain4j 不允许构建空 memory，所以要提前判断
+                if (!chatMemory.messages().isEmpty()) {
+                    builder.chatMemory(chatMemory);
+                }
+                StreamingChatAssistant aiService = builder.build();
+                // langchain4j 函数式接口初始化
                 TokenStream tokenStream = aiService.stream(
                         skillPrompt,
                         request.getMessage()
                 );
-
+                // AI 回答
+                StringBuilder fullAiResponse = new StringBuilder();
                 // 开始对话
                 tokenStream.onNext(token -> {
                             try {
@@ -98,22 +93,23 @@ public class ChatServiceImpl implements ChatService {
                             }
                         })
                         .onComplete(response -> {
+                            // 保存用户消息
+                            saveMessage(sessionId, request.getMessage(), ChatRole.USER.name());
+                            // 保存 ai 回答
                             saveMessage(sessionId, fullAiResponse.toString(), ChatRole.ASSISTANT.name());
                             sseEmitter.complete();
-                            log.info("流式对话完成");
+                            log.info("============================ 对话完成");
                         })
                         .onError(e -> {
-                            log.error("流式对话异常", e);
                             try {
                                 sseEmitter.send(SseEmitter.event().data("对话异常：" + e.getMessage()));
                             } catch (Exception ex) {
                                 throw new RuntimeException(ex);
                             }
                             sseEmitter.completeWithError(e);
+                            log.info("============================ 对话失败");
                         })
                         .start();
-
-
             } catch (Exception e) {
                 log.error("对话异常", e);
                 try {

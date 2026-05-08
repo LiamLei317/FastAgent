@@ -29,7 +29,7 @@ public interface MessageService {
      * @param sessionId 会话ID
      * @return 消息列表
      */
-    List<Message> getMessagesBySessionId(Long sessionId);
+    List<Message> getMessagesBySessionId(String sessionId);
 
     /**
      * 分页获取会话消息列表
