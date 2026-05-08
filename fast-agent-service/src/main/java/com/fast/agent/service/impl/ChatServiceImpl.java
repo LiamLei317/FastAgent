@@ -1,6 +1,8 @@
 package com.fast.agent.service.impl;
 
 import com.fast.agent.common.enums.ChatRole;
+import com.fast.agent.common.utils.SkillUtil;
+import com.fast.agent.common.utils.SystemPromptUtil;
 import com.fast.agent.core.intent.IntentParser;
 import com.fast.agent.core.skills.SkillsPromptLoader;
 import com.fast.agent.memory.shortterm.CustomRedisChatMemoryStore;
@@ -57,10 +59,21 @@ public class ChatServiceImpl implements ChatService {
                     return;
                 }
                 log.info("============================ 开始对话");
+                String userInput = request.getMessage();
                 // 意图识别
-                IntentType intentType = intentParser.parseIntent(request.getMessage());
+                IntentType intentType = intentParser.parseIntent(userInput);
                 // 根据意图获取prompt
                 String skillPrompt = skillPromptLoader.getSkillPrompt(intentType);
+                String globalSystem = SystemPromptUtil.get();
+                String outputFormatSkill = SkillUtil.buildFullSkill("DOCUMENT_OUTPUT", userInput);
+
+                // ====================== 最终超级System（融合你+我） ======================
+                String finalSystem =
+                        globalSystem          // 全局规则（我）
+                                + "\n\n=== 业务场景技能 ===\n"
+                                + skillPrompt   // 你的专业场景Skill（你原来的，不动）
+                                + "\n\n=== 输出格式要求 ===\n"
+                                + outputFormatSkill;
                 // todo 本来想用 tokenWindowChatMemory 但是找不到能用的分词器，后续要处理
                 ChatMemory chatMemory = MessageWindowChatMemory.builder()
                         .id(sessionId)                // 用 sessionId 作为记忆ID
@@ -78,7 +91,7 @@ public class ChatServiceImpl implements ChatService {
                 StreamingChatAssistant aiService = builder.build();
                 // langchain4j 函数式接口初始化
                 TokenStream tokenStream = aiService.stream(
-                        skillPrompt,
+                        finalSystem,
                         request.getMessage()
                 );
                 // AI 回答

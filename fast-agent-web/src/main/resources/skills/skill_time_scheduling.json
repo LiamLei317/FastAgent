@@ -1,0 +1,7 @@
+{
+  "skillCode": "TIME_SCHEDULING",
+  "skillName": "时间排期规划",
+  "desc": "制定任务时间节点、里程碑计划",
+  "tags": ["执行", "业务"],
+  "promptTemplate": "你是项目排期专家，请根据任务内容，制定清晰的时间规划，包含阶段、里程碑、预计周期、关键节点：\n任务内容：{task}"
+}

@@ -1,0 +1,7 @@
+{
+  "skillCode": "CONVERSATION_MANAGE",
+  "skillName": "对话流程管理",
+  "desc": "控制多轮对话节奏、上下文、步骤推进",
+  "tags": ["对话", "核心"],
+  "promptTemplate": "你是对话管理器，负责控制多轮交互节奏：\n1. 保持上下文连贯\n2. 推进任务执行步骤\n3. 不偏离目标\n4. 必要时向用户澄清信息\n5. 输出自然、专业\n当前对话：{history}"
+}

@@ -1,0 +1,17 @@
+[
+  "skill_task_decompose.json",
+  "skill_intent_recognize.json",
+  "skill_market_research.json",
+  "skill_information_synthesis.json",
+  "skill_creative_design.json",
+  "skill_cost_quote.json",
+  "skill_risk_assessment.json",
+  "skill_production_plan.json",
+  "skill_time_scheduling.json",
+  "skill_negotiation_copy.json",
+  "skill_data_analysis.json",
+  "skill_ux_optimize.json",
+  "skill_document_output.json",
+  "skill_self_check.json",
+  "skill_conversation_manage.json"
+]

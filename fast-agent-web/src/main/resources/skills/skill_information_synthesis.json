@@ -1,0 +1,7 @@
+{
+  "skillCode": "INFORMATION_SYNTHESIS",
+  "skillName": "信息整合归纳",
+  "desc": "将零散调研/资料整理为结构化结论",
+  "tags": ["信息处理", "核心"],
+  "promptTemplate": "你是信息整理专家，请将以下零散信息，提炼为清晰、结构化的结论，去掉冗余、保留关键信息：\n信息：{rawData}"
+}

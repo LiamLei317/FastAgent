@@ -1,0 +1,7 @@
+{
+  "skillCode": "PRODUCTION_PLAN",
+  "skillName": "生产与落地规划",
+  "desc": "流程、周期、物料、节点、要求",
+  "tags": ["执行", "业务"],
+  "promptTemplate": "你是生产/执行规划专家，输出完整可落地执行方案：\n1. 执行流程步骤\n2. 周期与时间规划\n3. 所需物料/资源\n4. 关键节点\n5. 质量与风险要求\n需求：{userInput}"
+}
