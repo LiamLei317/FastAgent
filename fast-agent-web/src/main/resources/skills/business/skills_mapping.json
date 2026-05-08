@@ -1,0 +1,12 @@
+{
+  "CREATIVE_DESIGN": [
+    "business_cultural_creative",
+    "business_fashion_design",
+    "business_toy_design"
+  ],
+  "MARKET_RESEARCH": [
+    "business_market_cultural",
+    "business_market_beauty",
+    "business_market_food"
+  ]
+}
