@@ -63,7 +63,12 @@ public class ChatServiceImpl implements ChatService {
                 String userInput = request.getMessage();
 
                 // 执行 langgraph 生成 skill
-                String finalSystemPrompt = skillGraphService.run(userInput);
+                String finalSystemPrompt = null;
+                try {
+                    finalSystemPrompt = skillGraphService.run(userInput);
+                } catch (Exception e) {
+                    throw new RuntimeException("意图识别执行失败");
+                }
 
                 // todo 本来想用 tokenWindowChatMemory 但是找不到能用的分词器，后续要处理
                 ChatMemory chatMemory = MessageWindowChatMemory.builder()

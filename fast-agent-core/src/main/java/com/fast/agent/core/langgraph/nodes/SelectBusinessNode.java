@@ -5,6 +5,7 @@ import com.fast.agent.core.llm.ChatModelFactory;
 import com.fast.agent.core.skills.BusinessSkillManager;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -17,6 +18,7 @@ import java.util.Map;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class SelectBusinessNode {
 
     // 【修复1】改用工厂获取正确模型
@@ -24,6 +26,7 @@ public class SelectBusinessNode {
     private final BusinessSkillManager businessSkillManager;
 
     public SkillGraphState execute(SkillGraphState oldState) {
+        log.info("SelectBusinessNode-start: {}", oldState);
         String atomicSkillCode = oldState.getAtomicSkillCode();
         String userInput = oldState.getUserInput();
 
@@ -51,6 +54,8 @@ public class SelectBusinessNode {
         Map<String, Object> newData = new HashMap<>(oldState.data());
         newData.put("selectedBusinessCode", code);
 
-        return new SkillGraphState(newData);
+        SkillGraphState newState = new SkillGraphState(newData);
+        log.info("SelectBusinessNode-end: {}", newState);
+        return newState;
     }
 }

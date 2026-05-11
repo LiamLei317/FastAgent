@@ -3,6 +3,7 @@ package com.fast.agent.core.langgraph.nodes;
 import com.fast.agent.core.langgraph.state.SkillGraphState;
 import com.fast.agent.core.skills.SkillMappingManager;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -14,10 +15,12 @@ import java.util.Map;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class LoadBusinessNode {
     private final SkillMappingManager skillMappingManager;
 
     public SkillGraphState execute(SkillGraphState state) {
+        log.info("LoadBusinessNode-start: {}", state);
         String atomicSkillCode = state.getAtomicSkillCode();
         List<String> businessList = skillMappingManager.getBusinessSkillCodes(atomicSkillCode);
 
@@ -35,6 +38,8 @@ public class LoadBusinessNode {
         Map<String, Object> newData = new HashMap<>(state.data());
         newData.put("selectedBusinessCode", selectedBusinessCode);
 
-        return new SkillGraphState(newData);
+        SkillGraphState newState = new SkillGraphState(newData);
+        log.info("LoadBusinessNode-end: {}", newState);
+        return newState;
     }
 }

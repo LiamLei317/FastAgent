@@ -4,6 +4,7 @@ import com.fast.agent.core.langgraph.state.SkillGraphState;
 import com.fast.agent.core.llm.ChatModelFactory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -14,12 +15,14 @@ import java.util.Map;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class AnswerCheckNode {
 
     // ====================== 【关键修复1】改用工厂，绝对不直接注入 ======================
     private final ChatModelFactory chatModelFactory;
 
     public SkillGraphState execute(SkillGraphState oldState) {
+        log.info("AnswerCheckNode-start: {}", oldState);
         String userInput = oldState.getUserInput();
         String answer = oldState.getAnswer();
 
@@ -42,6 +45,8 @@ public class AnswerCheckNode {
         Map<String, Object> newData = new HashMap<>(oldState.data());
         newData.put("checkResult", result);
 
-        return new SkillGraphState(newData);
+        SkillGraphState newState = new SkillGraphState(newData);
+        log.info("AnswerCheckNode-end: {}", newState);
+        return newState;
     }
 }

@@ -15,12 +15,12 @@ import java.util.Optional;
 public class SkillGraphService {
     private final CompiledGraph<SkillGraphState> skillGraph;
 
-    public String run(String userQuery) throws Exception {
+    public String run(String userQuery) {
         Map<String, Object> inputs = new HashMap<>();
         inputs.put("userInput", userQuery); // 对应你 State 里的字段名
 
-        Optional<SkillGraphState> finalStateOpt = skillGraph.invoke(inputs);
-        SkillGraphState finalState = finalStateOpt.get();
+        SkillGraphState finalState = skillGraph.invoke(inputs)
+                .orElseThrow(() -> new IllegalStateException("LangGraph-Skill 执行未返回任何状态"));
 
         return finalState.getFinalSystemPrompt();
     }

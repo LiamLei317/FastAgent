@@ -5,6 +5,7 @@ import com.fast.agent.core.langgraph.state.SkillGraphState;
 import com.fast.agent.core.skills.AtomicSkillManager;
 import com.fast.agent.core.skills.BusinessSkillManager;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -19,12 +20,14 @@ import java.util.Map;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class BuildPromptNode {
 
     private final AtomicSkillManager atomicSkillManager;
     private final BusinessSkillManager businessSkillManager;
 
     public SkillGraphState execute(SkillGraphState oldState) {
+        log.info("BuildPromptNode-start: {}", oldState);
         // 安全获取值
         String atomicSkillCode = oldState.getAtomicSkillCode();
         String businessCode = oldState.getSelectedBusinessCode();
@@ -50,6 +53,8 @@ public class BuildPromptNode {
         Map<String, Object> newData = new HashMap<>(oldState.data());
         newData.put("finalSystemPrompt", finalSystemPrompt);
 
-        return new SkillGraphState(newData);
+        SkillGraphState newState = new SkillGraphState(newData);
+        log.info("BuildPromptNode-end: {}", newState);
+        return newState;
     }
 }

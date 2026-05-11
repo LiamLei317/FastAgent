@@ -4,6 +4,7 @@ import com.fast.agent.core.langgraph.state.SkillGraphState;
 import com.fast.agent.core.llm.ChatModelFactory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -14,6 +15,7 @@ import java.util.Map;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class AtomicSkillNode {
     private final ChatModelFactory chatModelFactory;
 
@@ -53,14 +55,16 @@ public class AtomicSkillNode {
                 仅输出匹配到的单个编码：
                 """.formatted(state.getUserInput());
 
+        log.info("AtomicSkillNode-start: {}", state);
         ChatLanguageModel chatModel = chatModelFactory.createChatModel();
         String atomicCode = chatModel.generate(prompt);
 
         // 新状态
-        Map<String, Object> newData = new HashMap<>(state.data()); // 复制旧数据
+        Map<String, Object> newData = new HashMap<>(state.data());
         newData.put("atomicSkillCode", atomicCode);
         newData.put("retryCount", state.getRetryCount() + 1);
-
-        return state;
+        SkillGraphState newState = new SkillGraphState(newData);
+        log.info("AtomicSkillNode-end: {}", newState);
+        return newState;
     }
 }
