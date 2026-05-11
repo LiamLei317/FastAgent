@@ -1,7 +1,7 @@
 {
-  "skillCode": "DOCUMENT_OUTPUT",
-  "skillName": "结构化文档输出",
-  "desc": "将结果转为标准Markdown，适合交付",
-  "tags": ["输出", "格式"],
+  "code": "DOCUMENT_OUTPUT",
+  "name": "结构化文档输出",
+  "scene": "将结果转为标准Markdown，适合交付",
+  "keywords": ["输出", "格式"],
   "promptTemplate": "你是专业文档输出专家，将内容整理为标准Markdown格式：\n1. 层级清晰\n2. 重点突出\n3. 简洁易读\n4. 适合直接交付用户\n内容：{content}"
 }

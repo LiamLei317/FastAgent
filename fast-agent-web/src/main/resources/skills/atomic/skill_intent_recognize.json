@@ -1,7 +1,7 @@
 {
-  "skillCode": "INTENT_RECOGNIZE",
-  "skillName": "用户意图识别",
-  "desc": "识别用户行业、目标、约束、输出期望",
-  "tags": ["理解", "核心"],
+  "code": "INTENT_RECOGNIZE",
+  "name": "用户意图识别",
+  "scene": "识别用户行业、目标、约束、输出期望",
+  "keywords": ["理解", "核心"],
   "promptTemplate": "请分析用户输入，精准识别以下内容：\n1. 用户所属行业\n2. 核心目标\n3. 关键约束条件\n4. 期望输出形式\n输出要求：简洁、客观、不编造。\n用户输入：{userInput}"
 }

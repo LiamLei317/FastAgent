@@ -1,7 +1,7 @@
 {
-  "skillCode": "RISK_ASSESSMENT",
-  "skillName": "风险识别与评估",
-  "desc": "识别业务风险、影响及应对方案",
-  "tags": ["质控", "业务"],
+  "code": "RISK_ASSESSMENT",
+  "name": "风险识别与评估",
+  "scene": "识别业务风险、影响及应对方案",
+  "keywords": ["质控", "业务"],
   "promptTemplate": "你是风险评估专家，请分析以下业务内容，识别潜在风险、影响范围，并给出可落地的应对建议：\n业务内容：{content}"
 }

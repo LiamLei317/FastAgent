@@ -1,7 +1,7 @@
 {
-  "skillCode": "MARKET_RESEARCH",
-  "skillName": "市场调研",
-  "desc": "输出行业、竞品、用户、痛点、机会",
-  "tags": ["调研", "业务"],
+  "code": "MARKET_RESEARCH",
+  "name": "市场调研",
+  "scene": "输出行业、竞品、用户、痛点、机会",
+  "keywords": ["调研", "业务"],
   "promptTemplate": "你是专业市场分析师，执行结构化市场调研，输出 5 部分：\n1. 行业现状\n2. 核心竞品分析\n3. 目标用户画像\n4. 真实痛点\n5. 市场机会点\n输出务实、不空洞。\n需求：{userInput}"
 }

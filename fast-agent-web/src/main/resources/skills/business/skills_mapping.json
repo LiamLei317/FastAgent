@@ -1,12 +1,55 @@
 {
-  "CREATIVE_DESIGN": [
-    "business_cultural_creative",
-    "business_fashion_design",
-    "business_toy_design"
-  ],
   "MARKET_RESEARCH": [
     "business_market_cultural",
-    "business_market_beauty",
-    "business_market_food"
+    "business_market_food",
+    "business_market_beauty"
+  ],
+  "CREATIVE_DESIGN": [
+    "business_design_product",
+    "business_design_graphic",
+    "business_design_video"
+  ],
+  "COST_QUOTE": [
+    "business_quote_project",
+    "business_quote_product"
+  ],
+  "PRODUCTION_PLAN": [
+    "business_plan_production"
+  ],
+  "RISK_ASSESSMENT": [
+    "business_risk_financial",
+    "business_risk_security"
+  ],
+  "CONVERSATION_MANAGE": [
+    "business_chat_common"
+  ],
+  "TASK_DECOMPOSE": [
+    "business_task_project"
+  ],
+  "DATA_ANALYSIS": [
+    "business_data_report",
+    "business_data_excel"
+  ],
+  "COPY_WRITING": [
+    "business_copy_ad",
+    "business_copy_article"
+  ],
+  "CUSTOMER_SERVICE": [
+    "business_cs_after_sale"
+  ],
+  "SUMMARY": [
+    "business_summary_doc"
+  ],
+  "TRANSLATION": [
+    "business_translate_general"
+  ],
+  "BRAINSTORM": [
+    "business_brainstorm_product"
+  ],
+  "CODE": [
+    "business_code_dev"
+  ],
+  "DOC_GENERATOR": [
+    "business_doc_write"
   ]
 }

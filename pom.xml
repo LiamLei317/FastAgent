@@ -41,6 +41,7 @@
         <druid.version>1.2.23</druid.version>
         <hutool.version>5.8.32</hutool.version>
         <knife4j.version>4.5.0</knife4j.version>
+        <langgraph4j.version>1.7.0</langgraph4j.version>
     </properties>
 
     <dependencyManagement>
@@ -155,6 +156,19 @@
                 <groupId>com.github.xiaoymin</groupId>
                 <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
                 <version>${knife4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.bsc.langgraph4j</groupId>
+                <artifactId>langgraph4j-core</artifactId>
+                <version>${langgraph4j.version}</version>
+            </dependency>
+
+            <!-- LangGraph4j + LangChain4j 集成 -->
+            <dependency>
+                <groupId>org.bsc.langgraph4j</groupId>
+                <artifactId>langgraph4j-langchain4j</artifactId>
+                <version>${langgraph4j.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

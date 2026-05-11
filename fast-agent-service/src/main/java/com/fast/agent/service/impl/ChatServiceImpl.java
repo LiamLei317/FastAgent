@@ -1,15 +1,12 @@
 package com.fast.agent.service.impl;
 
 import com.fast.agent.common.enums.ChatRole;
-import com.fast.agent.common.utils.SkillUtil;
-import com.fast.agent.common.utils.SystemPromptUtil;
-import com.fast.agent.core.intent.IntentParser;
-import com.fast.agent.core.skills.SkillsPromptLoader;
+import com.fast.agent.core.langgraph.SkillGraphService;
+import com.fast.agent.core.langgraph.state.SkillGraphState;
 import com.fast.agent.memory.shortterm.CustomRedisChatMemoryStore;
 import com.fast.agent.model.dto.ChatRequest;
 import com.fast.agent.model.entity.Message;
 import com.fast.agent.model.entity.Session;
-import com.fast.agent.model.enums.IntentType;
 import com.fast.agent.service.ChatService;
 import com.fast.agent.service.MessageService;
 import com.fast.agent.service.SessionService;
@@ -22,8 +19,13 @@ import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.V;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.bsc.langgraph4j.CompiledGraph;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -36,11 +38,10 @@ public class ChatServiceImpl implements ChatService {
 
     private final ThreadPoolExecutor asyncExecutor;
     private final SessionService sessionService;
-    private final IntentParser intentParser;
-    private final SkillsPromptLoader skillPromptLoader;
     private final StreamingChatLanguageModel streamingChatModel;
     private final MessageService messageService;
     private final CustomRedisChatMemoryStore customRedisChatMemoryStore;
+    private final SkillGraphService skillGraphService;
 
 
     @Override
@@ -60,20 +61,10 @@ public class ChatServiceImpl implements ChatService {
                 }
                 log.info("============================ 开始对话");
                 String userInput = request.getMessage();
-                // 意图识别
-                IntentType intentType = intentParser.parseIntent(userInput);
-                // 根据意图获取prompt
-                String skillPrompt = skillPromptLoader.getSkillPrompt(intentType);
-                String globalSystem = SystemPromptUtil.get();
-                String outputFormatSkill = SkillUtil.buildFullSkill("DOCUMENT_OUTPUT", userInput);
 
-                // ====================== 最终超级System（融合你+我） ======================
-                String finalSystem =
-                        globalSystem          // 全局规则（我）
-                                + "\n\n=== 业务场景技能 ===\n"
-                                + skillPrompt   // 你的专业场景Skill（你原来的，不动）
-                                + "\n\n=== 输出格式要求 ===\n"
-                                + outputFormatSkill;
+                // 执行 langgraph 生成 skill
+                String finalSystemPrompt = skillGraphService.run(userInput);
+
                 // todo 本来想用 tokenWindowChatMemory 但是找不到能用的分词器，后续要处理
                 ChatMemory chatMemory = MessageWindowChatMemory.builder()
                         .id(sessionId)                // 用 sessionId 作为记忆ID
@@ -91,7 +82,7 @@ public class ChatServiceImpl implements ChatService {
                 StreamingChatAssistant aiService = builder.build();
                 // langchain4j 函数式接口初始化
                 TokenStream tokenStream = aiService.stream(
-                        finalSystem,
+                        finalSystemPrompt,
                         request.getMessage()
                 );
                 // AI 回答
