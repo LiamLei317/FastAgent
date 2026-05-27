@@ -7,6 +7,7 @@ import dev.langchain4j.model.zhipu.ZhipuAiChatModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 import java.time.Duration;
 
@@ -23,7 +24,8 @@ public class ChatModelConfig {
      * 以后要换模型，只改这里！
      */
     @Bean
-    public ChatLanguageModel chatLanguageModel() {
+    @Primary
+    public ChatLanguageModel chatLanguageModelPri() {
         return ZhipuAiChatModel.builder()
                 .apiKey(llmConfig.getApiKey())
                 .baseUrl(llmConfig.getBaseUrl())
