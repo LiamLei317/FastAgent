@@ -1,8 +1,6 @@
 package com.fast.agent.service.impl;
 
 import com.fast.agent.common.enums.ChatRole;
-import com.fast.agent.core.langgraph.SkillGraphService;
-import com.fast.agent.core.langgraph.state.SkillGraphState;
 import com.fast.agent.memory.shortterm.CustomRedisChatMemoryStore;
 import com.fast.agent.model.dto.ChatRequest;
 import com.fast.agent.model.entity.Message;
@@ -19,13 +17,9 @@ import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.V;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bsc.langgraph4j.CompiledGraph;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -41,8 +35,6 @@ public class ChatServiceImpl implements ChatService {
     private final StreamingChatLanguageModel streamingChatModel;
     private final MessageService messageService;
     private final CustomRedisChatMemoryStore customRedisChatMemoryStore;
-    private final SkillGraphService skillGraphService;
-
 
     @Override
     public void streamChat(ChatRequest request, SseEmitter sseEmitter) {
@@ -65,7 +57,8 @@ public class ChatServiceImpl implements ChatService {
                 // 执行 langgraph 生成 skill
                 String finalSystemPrompt = null;
                 try {
-                    finalSystemPrompt = skillGraphService.run(userInput);
+//                    finalSystemPrompt = skillGraphService.run(userInput);
+                    finalSystemPrompt = "请根据用户输入，生成一个系统提示，用于后续的会话，请勿返回其他内容。";
                 } catch (Exception e) {
                     throw new RuntimeException("意图识别执行失败");
                 }

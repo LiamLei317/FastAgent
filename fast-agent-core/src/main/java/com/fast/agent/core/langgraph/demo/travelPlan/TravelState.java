@@ -1,8 +1,8 @@
 package com.fast.agent.core.langgraph.demo.travelPlan;
 
 import org.bsc.langgraph4j.state.AgentState;
-import java.util.Map;
-import java.util.Optional;
+
+import java.util.*;
 
 public class TravelState extends AgentState {
 
@@ -43,5 +43,23 @@ public class TravelState extends AgentState {
     // 核心：交接目标节点（用于 Handoff）
     public Optional<String> handoffTarget() {
         return value("handoffTarget");
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> executionTrace() {
+        return value("executionTrace")
+                .map(list -> (List<String>) list)
+                .orElse(new ArrayList<>());
+    }
+
+    public TravelState addTrace(String nodeId) {
+        // 拿到所有的 trace
+        List<String> trace = executionTrace();
+        // 添加新 trace
+        trace.add(nodeId);
+        // 更新 data
+        HashMap<String, Object> newTrace = new HashMap<>(data());
+        newTrace.put("executionTrace", trace);
+        return new TravelState(newTrace);
     }
 }

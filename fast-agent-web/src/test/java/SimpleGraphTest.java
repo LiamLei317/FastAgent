@@ -1,5 +1,6 @@
 import com.fast.agent.core.langgraph.demo.queryWeather.WeatherAskGraph;
 import com.fast.agent.core.langgraph.demo.simplest.SimpleGraphMain;
+import com.fast.agent.core.langgraph.demo.travelPlan.TravelGraph;
 import com.fast.agent.web.FastAgentApplication;
 import org.bsc.langgraph4j.GraphStateException;
 import org.junit.jupiter.api.Test;
@@ -16,7 +17,7 @@ public class SimpleGraphTest {
     @Autowired
     private WeatherAskGraph weatherAskGraph;
     @Autowired
-    private com.fast.agent.core.langgraph.demo.travel.TravelGraph travelGraph;
+    private TravelGraph travelGraph;
 
     @Test
     public void testExecute() throws GraphStateException {

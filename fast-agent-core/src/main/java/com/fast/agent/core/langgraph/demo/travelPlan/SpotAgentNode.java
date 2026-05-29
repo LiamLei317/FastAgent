@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import org.bsc.langgraph4j.action.AsyncNodeAction;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -30,10 +31,10 @@ public class SpotAgentNode implements AsyncNodeAction<TravelState> {
             """.formatted(demand);
 
         String result = chatModelFactory.createChatModel().generate(prompt);
+        Map<String, Object> update = new HashMap<>(state.data());
+        update.put("spotResult", result);
+        update.remove("handoffTarget"); // 交给 supervisor 重新决策
 
-        return CompletableFuture.completedFuture(Map.of(
-                "spotResult", result,
-                "handoffTarget", "supervisor"
-        ));
+        return CompletableFuture.completedFuture(update);
     }
 }

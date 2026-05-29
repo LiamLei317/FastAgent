@@ -41,7 +41,7 @@
         <druid.version>1.2.23</druid.version>
         <hutool.version>5.8.32</hutool.version>
         <knife4j.version>4.5.0</knife4j.version>
-        <langgraph4j.version>1.7.0</langgraph4j.version>
+        <langgraph4j.version>1.8.14</langgraph4j.version>
     </properties>
 
     <dependencyManagement>
