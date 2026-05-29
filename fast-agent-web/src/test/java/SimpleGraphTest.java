@@ -15,6 +15,8 @@ public class SimpleGraphTest {
     private SimpleGraphMain simpleGraph;
     @Autowired
     private WeatherAskGraph weatherAskGraph;
+    @Autowired
+    private com.fast.agent.core.langgraph.demo.travel.TravelGraph travelGraph;
 
     @Test
     public void testExecute() throws GraphStateException {
@@ -24,5 +26,10 @@ public class SimpleGraphTest {
     @Test
     public void testWeatherGraph() throws GraphStateException {
         weatherAskGraph.execute("今天北京天气如何");
+    }
+
+    @Test
+    public void testTravelGraph() throws GraphStateException {
+        travelGraph.execute("我想去阿那亚看看");
     }
 }
