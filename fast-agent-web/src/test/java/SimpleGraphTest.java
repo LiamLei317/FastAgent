@@ -1,7 +1,7 @@
-import com.fast.agent.core.langgraph.demo.localLife.LocalLifeGraph;
-import com.fast.agent.core.langgraph.demo.queryWeather.WeatherAskGraph;
-import com.fast.agent.core.langgraph.demo.simplest.SimpleGraphMain;
-import com.fast.agent.core.langgraph.demo.travelPlan.TravelGraph;
+import com.fast.agent.demos.langgraph.localLife.LocalLifeGraph;
+import com.fast.agent.demos.langgraph.queryWeather.WeatherAskGraph;
+import com.fast.agent.demos.langgraph.simplest.SimpleGraphMain;
+import com.fast.agent.demos.langgraph.travelPlan.TravelGraph;
 import com.fast.agent.web.FastAgentApplication;
 import org.bsc.langgraph4j.GraphStateException;
 import org.junit.jupiter.api.Test;
@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 
-import java.util.Map;
 
 @SpringBootTest(classes = FastAgentApplication.class)
 @TestPropertySource(locations = "file:${user.dir}/../.env")

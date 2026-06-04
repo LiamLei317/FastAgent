@@ -25,6 +25,8 @@
         <module>fast-agent-dao</module>
         <module>fast-agent-service</module>
         <module>fast-agent-web</module>
+        <module>fast-agent-payment</module>
+        <module>fast-agent-demos</module>
     </modules>
 
     <properties>
